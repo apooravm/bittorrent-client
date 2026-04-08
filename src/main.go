@@ -17,15 +17,22 @@ type Peer struct {
 	Port uint16
 }
 
+var (
+	peers            []Peer
+	torrent_file_raw []byte
+	parsed_torrent   bencodeparser.ParsedData
+	torrent_filename = "example_gta.torrent"
+)
+
 func main() {
-	filename := "example_ut.torrent"
-	data, err := bencodeparser.ParseFile(filename)
+	var err error
+	parsed_torrent, err = bencodeparser.ParseFile(torrent_filename)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
 
-	res, ok := data.Data.(bencodeparser.ParsedDict)
+	res, ok := parsed_torrent.Data.(bencodeparser.ParsedDict)
 	if !ok {
 		return
 	}
@@ -36,7 +43,7 @@ func main() {
 	}
 	fmt.Println("Piece Length ->", res["info"].(bencodeparser.ParsedDict)["piece length"])
 
-	fileData, err := os.ReadFile(filename)
+	torrent_file_raw, err = os.ReadFile(torrent_filename)
 	if err != nil {
 		log.Println("E: Opening file.", err.Error())
 		return
@@ -50,11 +57,27 @@ func main() {
 
 	defer conn.Close()
 
+	if err = announce_req(conn); err != nil {
+		return
+	}
+
+	// peer handshake
+	// buf := make([]byte, 68)
+	// buf[0] = 19
+	// copy(buf[1:], "BitTorrent protocol")
+	// copy(buf[28:], parsed_torrent.Info_hash[:])
+	// copy(buf[48:], 12345)
+}
+
+// construct announce_req and fetch peer list
+func announce_req(conn *net.UDPConn) error {
+	var err error
+
 	resp := make([]byte, 16)
 	_, err = conn.Read(resp)
 	if err != nil {
 		log.Println("E: Reading from UDP conn", err.Error())
-		return
+		return err
 	}
 
 	action := binary.BigEndian.Uint32(resp[0:4])
@@ -73,7 +96,7 @@ func main() {
 
 	binary.BigEndian.PutUint32(buf[12:16], txn_id)
 
-	copy(buf[16:36], fileData[data.Info_idx_start:data.Info_idx_end])
+	copy(buf[16:36], parsed_torrent.Info_hash[:])
 
 	// peer_id (20 bytes)
 	peerID := []byte("-GO0001-123456789012")
@@ -106,22 +129,26 @@ func main() {
 	_, err = conn.Write(buf)
 	if err != nil {
 		log.Println("E: Writing announce to conn", err.Error())
-		return
+		return err
 	}
 
 	resp = make([]byte, 1500)
 	n, err := conn.Read(resp)
 	if err != nil {
 		log.Println("E: Reading resp from conn", err.Error())
-		return
+		return err
 	}
 
 	for i := 20; i < n; i += 6 {
 		ip := net.IP(resp[i : i+4])
 		port := binary.BigEndian.Uint16(resp[i+4 : i+6])
 
-		println(ip.String(), port)
+		peers = append(peers, Peer{IP: ip, Port: port})
 	}
+
+	fmt.Printf("%d peers found\n", len(peers))
+
+	return nil
 }
 
 // connect_request -> get connection_id

@@ -39,3 +39,15 @@ Offset  Size  Name
 92      4     num_want (-1 = default)
 96      2     port
 ```
+
+### Peer Messaging Procol (PMP)
+
+**First handshake**
+
+```
+1 byte   → 19
+19 bytes → "BitTorrent protocol"
+8 bytes  → reserved (all zeros fine)
+20 bytes → info_hash
+20 bytes → peer_id
+```

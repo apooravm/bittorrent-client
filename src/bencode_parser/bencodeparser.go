@@ -1,6 +1,7 @@
 package bencodeparser
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"log"
 	"os"
@@ -19,6 +20,7 @@ type ParsedData struct {
 	Data           any
 	Info_idx_start int
 	Info_idx_end   int
+	Info_hash      [20]byte
 }
 
 type ParsedList []any
@@ -38,6 +40,7 @@ func ParseFile(filename string) (ParsedData, error) {
 
 	val, _ := parse(0, &data)
 	parsed_data.Data = val
+	parsed_data.Info_hash = sha1.Sum(data[parsed_data.Info_idx_start:parsed_data.Info_idx_end])
 
 	return parsed_data, nil
 }
