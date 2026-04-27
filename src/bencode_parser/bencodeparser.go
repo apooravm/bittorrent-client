@@ -62,7 +62,7 @@ func main() {
 	case ParsedList:
 		fmt.Println("list:", v)
 	case ParsedDict:
-		prettyPrint(v, 0)
+		PrettyPrint(v, 0)
 		// fmt.Println("dict:", v)
 		// for k, vl := range v {
 		// 	// fmt.Printf("%s %#v\n", k, vl)
@@ -206,7 +206,7 @@ func parse_list(idx int, data *[]byte) (ParsedList, int) {
 	return res, idx
 }
 
-func prettyPrint(val any, indent int) {
+func PrettyPrint(val any, indent int) {
 	prefix := ""
 	for i := 0; i < indent; i++ {
 		prefix += "  "
@@ -223,7 +223,7 @@ func prettyPrint(val any, indent int) {
 	case []any:
 		for _, item := range v {
 			fmt.Println(prefix + "-")
-			prettyPrint(item, indent+1)
+			PrettyPrint(item, indent+1)
 		}
 
 	case ParsedDict:
@@ -232,11 +232,11 @@ func prettyPrint(val any, indent int) {
 
 			case ParsedDict, []any:
 				fmt.Println(prefix + key + ":")
-				prettyPrint(value, indent+1)
+				PrettyPrint(value, indent+1)
 
 			default:
 				fmt.Printf("%s%s: ", prefix, key)
-				prettyPrint(value, 0)
+				PrettyPrint(value, 0)
 			}
 		}
 

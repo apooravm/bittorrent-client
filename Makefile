@@ -2,7 +2,7 @@ APP_TITLE := bittorrent-client
 VERSION := 0.1.0
 APP_NAME := ${APP_TITLE}_v${VERSION}.exe
 BUILD_ROUTE := ./bin/${APP_NAME}
-SRC_ROUTE := ./src/main.go
+SRC_ROUTE := ./src
 
 dev: build
 	@${BUILD_ROUTE}
